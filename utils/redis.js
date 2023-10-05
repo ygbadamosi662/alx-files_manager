@@ -1,34 +1,51 @@
 const redis = require('redis');
 
+
 class RedisClient {
   constructor() {
     this._client = redis.createClient();
-    // console.log('Client', this._client)
-    // createClient()
-    //   .connect()
-    //   .then((result) => {
-    //     this._client = result;
-    //     console.log('Redis connected');
-    //   })
-    //   .catch((err) => {
-    //     console.log('Redis error', err)
-    //   });
+    console.log('Connecting.....');
+  
+    this._client.on('error', (err) => {
+      console.log('Redis error: ', err);
+    });
+    this._client.on('connect', () => {
+      console.log('Redis connected', 'connected:', this._client.connected, ' ready:', this._client.ready);
+    })
   }
 
   isAlive() {
-    // console.log(this._client)
-    const pong = this._client.PING();
-    return pong === 'PONG';
+    let okk = null;
+    this._client.ping((err, reply) => {
+      console.log(typeof reply, reply)
+      console.log(typeof 'PONG', 'PONG')
+       if (reply === 'PONG') {
+        console.log('yea')
+        okk = true;
+       } else {
+        okk = false;
+       }
+    });
+
+    return okk;
   }
 
   get client() {
     return this._client;
   }
 
+  get connectionPromise() {
+    return this._connectionPromise;
+  }
+
   async get(key) {
     if (!key) { return }
     try {
-      return await this._client.get(key);
+      let riri = ''
+      this._client.get(key, (err, reply) => {
+        riri = reply;
+      });
+      return riri;
     } catch (error) {
       throw error;
     }
@@ -52,24 +69,7 @@ class RedisClient {
     }
   }
 }
-(async () => {
-  try {
-    let client = await redis.createClient({
-      host: 'localhost',
-      port: 6379,
-    });
-  
-    client.on('connection', () => {
-      console.log('Connected to Redis server');
-    });
 
-    client.on('error', (err) => {
-      console.log('Redis Error', err);
-    });
-  } catch (err) {
-    console.log('Redis connection error', err);
-  }
-})();
 const redisClient = new RedisClient();
 
 module.exports = redisClient;
